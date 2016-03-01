@@ -1,7 +1,10 @@
 #! /usr/bin/python3
 import click
 import os
+import shutil
 import subprocess
+import sys
+import traceback
 import urllib.request
 from git import Repo
 
@@ -32,8 +35,6 @@ class LLVMResourceHandler:
             return 'extra', 'tools/clang/tools'
         elif component == 'lldb':
             return 'lldb', 'tools'
-        elif component == 'test-suite':
-            return 'test-suite', 'projects'
         else:
             raise RuntimeError('Unknown component: {0}'.format(component))
 
@@ -101,12 +102,15 @@ class LLVMTrunkHandler(LLVMResourceHandler):
             LLVMResourceHandler.installComponent(component, self.rootDir)
 
     def checkoutRepo(self, component, targetDir):
+        if os.path.exists(targetDir):
+            # clear directory
+            shutil.rmtree(targetDir)
+            os.makedirs(targetDir)
         if self.repoType == 'svn':
             svnURL = self.svnURL.format(component)
             print('[{0}] SVN Checkout: {1} into {2}'.format(self.version, svnURL, targetDir))
             cmd = self.svnCommand + [self.svnURL.format(component), targetDir]
             process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-            stdout = process.stdout.read()
             ret = process.wait()
             if ret != 0:
                 raise SystemError("Failed to checkout repository (%d)" % process.returncode)
@@ -167,15 +171,15 @@ class LLVMArchiveHandler(LLVMResourceHandler):
 @click.option('--llvm-version', '-v', type=click.STRING, multiple=True, help='The LLVM version (or keyword trunk) to setup')
 @click.option('--llvm-repo', '-r', type=click.Choice(['svn','git']), default='svn')
 @click.argument('target-directory', type=click.Path(True,False,True,True,True,True))
-@click.argument('llvm-components', nargs=-1, type=click.Choice(['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb', 'test-suite']))
+@click.argument('llvm-components', nargs=-1, type=click.Choice(['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb', 'all']))
 def main (**kwargs):
     rootDir = kwargs['target_directory']
     llvmVersions = kwargs['llvm_version']
     llvmComponents = kwargs['llvm_components']
     repoType = kwargs['llvm_repo']
-    if len(llvmComponents) == 0:
+    if len(llvmComponents) == 1 and llvmComponents[0] == 'all':
         # download all
-        llvmComponents = ['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb', 'test-suite']
+        llvmComponents = ['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb']
     # setup LLVM
     for v in llvmVersions:
         targetDir = getTargetDirectory(rootDir, v)
@@ -203,7 +207,8 @@ def setupTargetDirectory(dir):
     return targetDirs
 
 if __name__ == '__main__':
-    #try:
-    main()
-    #except Exception as e:
-    #    print('Failed to setup LLVM: {0}'.format(e))
+    try:
+        main()
+    except Exception as e:
+        print('Failed to setup LLVM: {0}'.format(e))
+        traceback.print_exc(file=sys.stdout)
