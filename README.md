@@ -1,6 +1,12 @@
 # llvm_config.py
 The llvm_config.py python script is a helper script to setup LLVM to build LLVM and its components (e.g. clang, lldb, etc.) locally. It supports the setup of already released versions as well as trunk using either SVN or GIT. 
 
+# Package Dependencies
+The following Python3 packages are required (e.g. obtainable via pip3 or apt-get on Ubuntu):
+* click
+* urllib
+* gitpython
+
 # Usage
 The script is a command-line only tool with the following usage string:
 ```llvm_config.py [OPTIONS] TARGET_DIRECTORY [COMPONENTS]```
