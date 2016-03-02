@@ -35,6 +35,8 @@ class LLVMResourceHandler:
             return 'extra', 'tools/clang/tools'
         elif component == 'lldb':
             return 'lldb', 'tools'
+        elif component == 'lld':
+            return 'lld', 'tools'
         else:
             raise RuntimeError('Unknown component: {0}'.format(component))
 
@@ -171,15 +173,15 @@ class LLVMArchiveHandler(LLVMResourceHandler):
 @click.option('--llvm-version', '-v', type=click.STRING, multiple=True, help='The LLVM version (or keyword trunk) to setup')
 @click.option('--llvm-repo', '-r', type=click.Choice(['svn','git']), default='svn')
 @click.argument('target-directory', type=click.Path(True,False,True,True,True,True))
-@click.argument('llvm-components', nargs=-1, type=click.Choice(['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb', 'all']))
+@click.argument('llvm-components', nargs=-1, type=click.Choice(['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb', 'lld', 'all']))
 def main (**kwargs):
     rootDir = kwargs['target_directory']
     llvmVersions = kwargs['llvm_version']
     llvmComponents = kwargs['llvm_components']
     repoType = kwargs['llvm_repo']
-    if len(llvmComponents) == 1 and llvmComponents[0] == 'all':
+    if len(llvmComponents) == 1 and 'all' in llvmComponents:
         # download all
-        llvmComponents = ['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb']
+        llvmComponents = ['cfe', 'compiler-rt', 'libcxx', 'libcxxabi', 'libunwind', 'openmp', 'clang-tools-extra', 'lldb', 'lld']
     # setup LLVM
     for v in llvmVersions:
         targetDir = getTargetDirectory(rootDir, v)

@@ -28,6 +28,8 @@ The following arguments are supported:
   * openmp
   * lldb
   * test-suite
+  * lld
+  * *all* (as shortcut for the above list)
 
 ### Directory Layout
 Within the `TARGET_DIRECTORY`, the following directory structure is created:
